@@ -8,6 +8,8 @@ window.onload = function() {
     dialog
   } = require('electron').remote;
   var encryptionLevel = 1;
+  //When encryptOrDecrypt is 1 that means it will encrypt
+  //When encryptOrDecrypt is 0 that means it will decrypt
   var encryptOrDecrypt = 1;
   const fileMangerBtn = document.getElementById('file_button');
   const fileMangerDecBtn = document.getElementById('dec_file_button');
@@ -40,7 +42,7 @@ window.onload = function() {
     choiceHard.style.backgroundColor = "#0074D9";
     encryptionLevel = 3;
   })
-
+  //This function prompts the user to choose a file for encryption or decryption
   function openFile() {
     dialog.showOpenDialog((fileNames) => {
       if (fileNames === undefined) {
@@ -57,6 +59,7 @@ window.onload = function() {
             let dataAndKey = encryptData(data, encryptionLevel);
             saveFile(dataAndKey[0], dataAndKey[1]);
           } else {
+            //Prompts user to enter decryption key
             const prompt = require('electron-prompt');
             prompt({
               title: 'Enter the decryption key.',
@@ -76,7 +79,7 @@ window.onload = function() {
       })
     })
   }
-
+  //Prompts user to choose a file location for the decrypted/encrypted file[s]
   function saveFile(content, key) {
     dialog.showSaveDialog((filename) => {
       if (filename === undefined) {
@@ -102,7 +105,7 @@ window.onload = function() {
     })
 
   }
-
+  //Encrypts the chosen file with varying difficulties of user specified encryption
   function encryptData(data, level) {
     var encryptedData = "";
     var encryptionKey = "";
@@ -130,16 +133,22 @@ window.onload = function() {
     } else if (level == 3) {
       let keyLength = data.length;
       var key = generateKey(keyLength);
+      var index = 0;
       encryptionKey = key.join();
       for (let i = 0; i < data.length; i++) {
-        let randomNumber = key[i];
+        if (index < (key.length - 1)) {
+          index++;
+        } else {
+          index = 0;
+        }
+        let randomNumber = key[index];
         encryptedData += String.fromCharCode(data[i].charCodeAt(0) + randomNumber);
       }
     }
     let dataAndKey = [encryptedData, encryptionKey];
     return dataAndKey;
   }
-
+  //Attempts to decrypt the chosen file with a user specified key
   function decryptData(data, key) {
     let keyArray = key.split(",");
     let keyLength = keyArray.length;
@@ -155,7 +164,7 @@ window.onload = function() {
     }
     return decryptedData;
   }
-
+  //Generates an encryption key, length varies depending on difficulty
   function generateKey(keyLength) {
     var randomNumber = Math.floor(Math.random() * Math.floor(500)) - 250;
     var key = [randomNumber];
