@@ -2,17 +2,24 @@ window.onload = function() {
   const {
     shell
   } = require('electron')
-  const os = require('os')
+  const os = require('os');
   const fs = require('fs');
   const {
     dialog
   } = require('electron').remote;
   var encryptionLevel = 1;
+  var encryptOrDecrypt = 1;
   const fileMangerBtn = document.getElementById('file_button');
+  const fileMangerDecBtn = document.getElementById('dec_file_button');
   const choiceEasy = document.getElementById('choice_easy');
   const choiceMedium = document.getElementById('choice_medium');
   const choiceHard = document.getElementById('choice_hard');
   fileMangerBtn.addEventListener('click', (event) => {
+    encryptOrDecrypt = 1;
+    window.setTimeout(openFile, 150);
+  })
+  fileMangerDecBtn.addEventListener('click', (event) => {
+    encryptOrDecrypt = 0;
     window.setTimeout(openFile, 150);
   })
   choiceEasy.addEventListener('click', (event) => {
@@ -46,8 +53,25 @@ window.onload = function() {
           console.log("Cannot read file ", err);
           return;
         } else {
-          let dataAndKey = encryptData(data, encryptionLevel);
-          saveFile(dataAndKey[0], dataAndKey[1]);
+          if (encryptOrDecrypt) {
+            let dataAndKey = encryptData(data, encryptionLevel);
+            saveFile(dataAndKey[0], dataAndKey[1]);
+          } else {
+            const prompt = require('electron-prompt');
+            prompt({
+              title: 'Enter the decryption key.',
+              label: 'KEY:',
+              value: '',
+              type: 'input'
+            }).then((r) => {
+              if (r === null) {
+                alert('user cancelled');
+              } else {
+                let decryptedData = decryptData(data, r);
+                saveFile(decryptedData, 0);
+              }
+            }).catch(console.error);
+          }
         }
       })
     })
@@ -66,12 +90,15 @@ window.onload = function() {
           return;
         }
       })
-      fs.writeFile(filename + "_key", key, (err) => {
-        if (err) {
-          console.log("An error occured with the creation of the file " + err.message);
-          return;
-        }
-      })
+      if (key != 0) {
+        fs.writeFile(filename + "_key", key, (err) => {
+          if (err) {
+            console.log("An error occured with the creation of the file " + err.message);
+            return;
+          }
+        })
+      }
+
     })
 
   }
@@ -80,56 +107,60 @@ window.onload = function() {
     var encryptedData = "";
     var encryptionKey = "";
     if (level == 1) {
+      let keyLength = 1;
+      var key = generateKey(keyLength);
+      encryptionKey = "" + key[0];
       for (let i = 0; i < data.length; i++) {
-        encryptedData += String.fromCharCode(data[i].charCodeAt(0) + 1);
-        encryptionKey += "1 ";
+        encryptedData += String.fromCharCode(data[i].charCodeAt(0) + key[0]);
       }
     } else if (level == 2) {
-      var keyLength = Math.floor(Math.random() * Math.floor(5)) + 3;
+      let keyLength = Math.floor(Math.random() * Math.floor(5)) + 3;
       var key = generateKey(keyLength);
       var index = 0;
+      encryptionKey = key.join();
       for (let i = 0; i < data.length; i++) {
         if (index < (key.length - 1)) {
           index++;
         } else {
           index = 0;
         }
-        var randomNumber = key[index];
-        if ((data[i].charCodeAt(0) + randomNumber) < 127 &&
-          (data[i].charCodeAt(0) + randomNumber) > -127 &&
-          (data[i].charCodeAt(0) + randomNumber) != 0) {
-          encryptedData += String.fromCharCode(data[i].charCodeAt(0) + randomNumber);
-          encryptionKey += randomNumber + " ";
-        } else {
-          encryptedData += data[i];
-          encryptionKey += "0 ";
-        }
+        let randomNumber = key[index];
+        encryptedData += String.fromCharCode(data[i].charCodeAt(0) + randomNumber);
       }
     } else if (level == 3) {
-      var keyLength = data.length;
+      let keyLength = data.length;
       var key = generateKey(keyLength);
+      encryptionKey = key.join();
       for (let i = 0; i < data.length; i++) {
-        var randomNumber = key[i];
-        if ((data[i].charCodeAt(0) + randomNumber) < 127 &&
-          (data[i].charCodeAt(0) + randomNumber) > -127 &&
-          (data[i].charCodeAt(0) + randomNumber) != 0) {
-          encryptedData += String.fromCharCode(data[i].charCodeAt(0) + randomNumber);
-          encryptionKey += randomNumber + " ";
-        } else {
-          encryptedData += data[i];
-          encryptionKey += "0 ";
-        }
+        let randomNumber = key[i];
+        encryptedData += String.fromCharCode(data[i].charCodeAt(0) + randomNumber);
       }
     }
     let dataAndKey = [encryptedData, encryptionKey];
     return dataAndKey;
   }
 
+  function decryptData(data, key) {
+    let keyArray = key.split(",");
+    let keyLength = keyArray.length;
+    let decryptedData = "";
+    var index = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (index < (keyArray.length - 1)) {
+        index++;
+      } else {
+        index = 0;
+      }
+      decryptedData += String.fromCharCode(data[i].charCodeAt(0) - keyArray[index]);
+    }
+    return decryptedData;
+  }
+
   function generateKey(keyLength) {
-    var randomNumber = Math.floor(Math.random() * Math.floor(40)) - 20;
+    var randomNumber = Math.floor(Math.random() * Math.floor(500)) - 250;
     var key = [randomNumber];
     for (let i = 1; i < keyLength; i++) {
-      randomNumber = Math.floor(Math.random() * Math.floor(40)) - 20;
+      randomNumber = Math.floor(Math.random() * Math.floor(500)) - 250;
       key.push(randomNumber);
     }
     return key;
