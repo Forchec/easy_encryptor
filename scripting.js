@@ -7,35 +7,44 @@ window.onload = function() {
   const {
     dialog
   } = require('electron').remote;
+  // encyrptionLevel varies from 1 to 3 depending on user selected difficulty
   var encryptionLevel = 1;
-  //When encryptOrDecrypt is 1 that means it will encrypt
-  //When encryptOrDecrypt is 0 that means it will decrypt
+  // When encryptOrDecrypt is 1 that means it will encrypt
+  // When encryptOrDecrypt is 0 that means it will decrypt
   var encryptOrDecrypt = 1;
   const fileMangerBtn = document.getElementById('file_button');
   const fileMangerDecBtn = document.getElementById('dec_file_button');
   const choiceEasy = document.getElementById('choice_easy');
   const choiceMedium = document.getElementById('choice_medium');
   const choiceHard = document.getElementById('choice_hard');
+  // If the encrypt button is pressed, it will prepare to encrypt a file
   fileMangerBtn.addEventListener('click', (event) => {
     encryptOrDecrypt = 1;
     window.setTimeout(openFile, 150);
   })
+  // If the encrypt button is pressed, it will prepare to decrypt a file
   fileMangerDecBtn.addEventListener('click', (event) => {
     encryptOrDecrypt = 0;
     window.setTimeout(openFile, 150);
   })
+  // If this button is pressed it will become a darker color
+  // it will also return the other buttons to the normal color
   choiceEasy.addEventListener('click', (event) => {
     choiceEasy.style.backgroundColor = "#0074D9";
     choiceMedium.style.backgroundColor = "#7FDBFF";
     choiceHard.style.backgroundColor = "#7FDBFF";
     encryptionLevel = 1;
   })
+  // If this button is pressed it will become a darker color
+  // it will also return the other buttons to the normal color
   choiceMedium.addEventListener('click', (event) => {
     choiceEasy.style.backgroundColor = "#7FDBFF";
     choiceMedium.style.backgroundColor = "#0074D9";
     choiceHard.style.backgroundColor = "#7FDBFF";
     encryptionLevel = 2;
   })
+  // If this button is pressed it will become a darker color
+  // it will also return the other buttons to the normal color
   choiceHard.addEventListener('click', (event) => {
     choiceEasy.style.backgroundColor = "#7FDBFF";
     choiceMedium.style.backgroundColor = "#7FDBFF";
@@ -86,7 +95,7 @@ window.onload = function() {
         console.log("The user clicked the button but didn't create a file.");
         return;
       }
-
+      // Saves the file to the specified location
       fs.writeFile(filename, content, (err) => {
         if (err) {
           console.log("An error occured with the creation of the file " + err.message);
@@ -94,6 +103,7 @@ window.onload = function() {
         }
       })
       if (key != 0) {
+        // Saves the encryption key to the same location but with a "_key" appended to the file name
         fs.writeFile(filename + "_key", key, (err) => {
           if (err) {
             console.log("An error occured with the creation of the file " + err.message);
@@ -113,6 +123,8 @@ window.onload = function() {
       let keyLength = 1;
       var key = generateKey(keyLength);
       encryptionKey = "" + key[0];
+      // For each character in the data, it will shift its ascii value by
+      // a key specified amount
       for (let i = 0; i < data.length; i++) {
         encryptedData += String.fromCharCode(data[i].charCodeAt(0) + key[0]);
       }
@@ -121,6 +133,9 @@ window.onload = function() {
       var key = generateKey(keyLength);
       var index = 0;
       encryptionKey = key.join();
+      // For each character in the data, it will shift its ascii value by
+      // a key specified amount, if the data is longer than the key,
+      // the key will continue to repeat itself until the end of the data is reached
       for (let i = 0; i < data.length; i++) {
         if (index < (key.length - 1)) {
           index++;
@@ -135,6 +150,9 @@ window.onload = function() {
       var key = generateKey(keyLength);
       var index = 0;
       encryptionKey = key.join();
+      // For each character in the data, it will shift its ascii value by
+      // a key specified amount, if the data is longer than the key,
+      // the key will continue to repeat itself until the end of the data is reached
       for (let i = 0; i < data.length; i++) {
         if (index < (key.length - 1)) {
           index++;
